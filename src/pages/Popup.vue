@@ -23,6 +23,7 @@
       </button>
     </div>
     <div class="actions">
+      <button @click="handleOpenSidebar" class="sidebar-button">打开侧边栏</button>
       <button @click="handleSave" :disabled="loading">保存</button>
     </div>
   </div>
@@ -33,6 +34,7 @@ import { ref, onMounted } from 'vue'
 import { useStorage } from '../composables/useStorage'
 import { useModels } from '../composables/useModels'
 import ModelSelect from '../components/ModelSelect.vue'
+import { openSidebar } from '../utils/sidebar'
 
 const { getConfig, setConfig } = useStorage()
 const { fetchModels, loading, models } = useModels()
@@ -72,6 +74,15 @@ const handleFetchModels = async () => {
     // 这里可以添加错误提示
   }
 }
+
+const handleOpenSidebar = async () => {
+  try {
+    await openSidebar();
+    window.close();
+  } catch (error) {
+    console.error('Error opening sidebar:', error);
+  }
+};
 </script>
 
 <style scoped>
@@ -100,6 +111,9 @@ const handleFetchModels = async () => {
 .actions {
   margin-top: 1rem;
   text-align: right;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 button {
@@ -131,5 +145,13 @@ button:disabled {
   font-size: 0.9em;
   color: #666;
   text-align: center;
+}
+
+.sidebar-button {
+  background: #9C27B0;
+}
+
+.sidebar-button:hover {
+  background: #7B1FA2;
 }
 </style> 

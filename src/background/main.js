@@ -26,23 +26,6 @@ async function getConfig() {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   try {
-    if (request.action === 'toggleSidePanel') {
-      if (sender.tab) {
-        const tabId = sender.tab.id;
-        chrome.sidePanel.toggle(tabId).catch(error => {
-          console.error('Error toggling side panel:', error);
-        });
-      } else {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]) {
-            chrome.sidePanel.toggle(tabs[0].id).catch(error => {
-              console.error('Error toggling side panel:', error);
-            });
-          }
-        });
-      }
-    }
-
     console.log('request', request);
     
     if (request.type === 'sendMessage') {

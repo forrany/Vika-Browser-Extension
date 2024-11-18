@@ -1,12 +1,3 @@
-// 移除原有的 DOM 注入逻辑
-// 改为使用 chrome.sidePanel API
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'toggleSidePanel') {
-    // 切换侧边栏显示状态
-    chrome.sidePanel.toggle();
-  }
-});
 
 // 监听来自 background script 的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
