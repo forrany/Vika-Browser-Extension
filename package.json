@@ -8,6 +8,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@f3ve/vue-markdown-it": "^0.2.3",
+    "highlight.js": "^11.10.0",
+    "markdown-it": "^14.1.0",
+    "markdown-it-emoji": "^3.0.0",
+    "markdown-it-task-lists": "^2.1.1",
     "vue": "^3.3.4"
   },
   "devDependencies": {
@@ -15,4 +20,4 @@
     "@vitejs/plugin-vue": "^4.2.3",
     "vite": "^4.4.9"
   }
-} 
+}
