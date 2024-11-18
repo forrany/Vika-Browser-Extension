@@ -1,62 +1,111 @@
 <template>
-  <div class="ai-chat-sidebar">
-    <ModelSelect 
-      v-model="selectedModel"
-      :models="models"
-      @search="handleSearch"
-    />
-    <div class="chat-container" ref="chatContainer">
-      <ChatMessage
-        v-for="msg in messages"
-        :key="msg.id"
-        :message="msg"
-      />
+  <div class="sidebar-container">
+    <ModelSelect />
+    <div class="messages-container">
+      <template v-if="messages.length">
+        <ChatMessage
+          v-for="(message, index) in messages"
+          :key="index"
+          :message="message"
+        />
+      </template>
+      <div v-else class="empty-message">
+        开始对话...
+      </div>
     </div>
-    <ChatInput
-      v-model="inputMessage"
-      @send="sendMessage"
-    />
+    <ChatInput @send="handleSendMessage" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import ModelSelect from './ModelSelect.vue'
+import { ref, onMounted, nextTick } from 'vue'
 import ChatMessage from './ChatMessage.vue'
 import ChatInput from './ChatInput.vue'
-import { useModels } from '../composables/useModels'
+import ModelSelect from './ModelSelect.vue'
 import { useChat } from '../composables/useChat'
 
-const { models, selectedModel, initModels } = useModels()
-const { messages, sendMessage, inputMessage } = useChat()
-const chatContainer = ref(null)
+const { messages, addMessage, appendToLastMessage } = useChat()
+const currentMessageContent = ref('')
 
-onMounted(async () => {
-  await initModels()
+// 添加消息监听器
+onMounted(() => {
+  console.log('Sidebar mounted, setting up message listener')
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log('Received message in sidebar:', message)
+    
+    if (message.type === 'streamResponse' || message.action === 'streamResponse') {
+      console.log('Received stream response:', message.content)
+      if (currentMessageContent.value === '') {
+        // 如果是新消息，添加一个新的 AI 消息
+        addMessage({
+          role: 'assistant',
+          content: message.content || ''
+        })
+        currentMessageContent.value = message.content || ''
+      } else {
+        // 如果是现有消息的继续，追加内容
+        appendToLastMessage(message.content || '')
+        currentMessageContent.value += message.content || ''
+      }
+      
+      // 强制更新视图
+      nextTick(() => {
+        const container = document.querySelector('.messages-container')
+        if (container) {
+          container.scrollTop = container.scrollHeight
+        }
+      })
+    }
+    
+    if (message.type === 'streamDone' || message.action === 'streamDone') {
+      console.log('Stream completed')
+      currentMessageContent.value = '' // 重置当前消息内容
+    }
+  })
 })
 
-const handleSearch = (searchTerm) => {
-  // 模型搜索逻辑
+const handleSendMessage = async (message) => {
+  console.log('Sending message:', message)
+  
+  // 添加用户消息
+  addMessage({
+    role: 'user',
+    content: message
+  })
+  
+  // 发送消息到 background script
+  try {
+    await chrome.runtime.sendMessage({
+      type: 'sendMessage',
+      message
+    })
+  } catch (error) {
+    console.error('Error sending message:', error)
+    addMessage({
+      role: 'error',
+      content: '发送消息失败: ' + error.message
+    })
+  }
 }
 </script>
 
 <style scoped>
-.ai-chat-sidebar {
-  position: fixed;
-  right: 0;
-  top: 0;
-  width: 300px;
-  height: 100vh;
-  background: white;
-  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-  z-index: 9999;
+.sidebar-container {
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  background: white;
 }
 
-.chat-container {
+.messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: 1rem;
+}
+
+.empty-message {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
 }
 </style> 

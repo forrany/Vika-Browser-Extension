@@ -2,8 +2,8 @@
   <div 
     class="message"
     :class="{ 
-      'user-message': message.isUser,
-      'ai-message': !message.isUser 
+      'user-message': message.role === 'user',
+      'ai-message': message.role === 'assistant' 
     }"
   >
     {{ message.content }}

@@ -1,79 +1,49 @@
 <template>
   <div class="model-select">
-    <input
-      type="text"
-      v-model="searchQuery"
-      placeholder="搜索模型..."
-      class="search-input"
-      @input="handleSearch"
-    >
     <select
-      :value="modelValue"
-      @change="$emit('update:modelValue', $event.target.value)"
-      :disabled="!models.length"
+      :value="selectedModel"
+      @change="handleModelChange"
+      :disabled="loading"
     >
-      <option v-if="!models.length" value="">加载中...</option>
-      <option
-        v-for="model in filteredModels"
-        :key="model.id"
-        :value="model.id"
-      >
-        {{ model.id }}
-      </option>
+      <option v-if="loading" value="">加载中...</option>
+      <template v-else>
+        <option
+          v-for="model in models"
+          :key="model.id"
+          :value="model.id"
+        >
+          {{ model.name }}
+        </option>
+      </template>
     </select>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { useModels } from '../composables/useModels'
 
-const props = defineProps({
-  modelValue: String,
-  models: {
-    type: Array,
-    default: () => []
-  }
-})
+const { models, selectedModel, loading, setSelectedModel } = useModels()
 
-const emit = defineEmits(['update:modelValue', 'search'])
-
-const searchQuery = ref('')
-
-const filteredModels = computed(() => {
-  if (!searchQuery.value) return props.models
-  const query = searchQuery.value.toLowerCase()
-  return props.models.filter(model => 
-    model.id.toLowerCase().includes(query)
-  )
-})
-
-let debounceTimer
-const handleSearch = () => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    emit('search', searchQuery.value)
-  }, 300)
+const handleModelChange = (event) => {
+  setSelectedModel(event.target.value)
 }
 </script>
 
 <style scoped>
 .model-select {
-  padding: 10px;
+  padding: 0.5rem;
   border-bottom: 1px solid #eee;
-}
-
-.search-input {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-bottom: 8px;
 }
 
 select {
   width: 100%;
-  padding: 5px;
+  padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
+  background: white;
+}
+
+select:disabled {
+  background: #f5f5f5;
 }
 </style> 

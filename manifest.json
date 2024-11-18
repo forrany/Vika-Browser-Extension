@@ -5,7 +5,12 @@
   "description": "AI Chat sidebar for Chrome",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "sidePanel",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "src/pages/popup.html"
@@ -25,5 +30,8 @@
       "resources": ["src/pages/*"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "side_panel": {
+    "default_path": "src/pages/sidepanel.html"
+  }
 } 

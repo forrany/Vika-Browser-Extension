@@ -1,69 +1,35 @@
 import { ref } from 'vue'
-import { nanoid } from 'nanoid'
+
+// 创建一个响应式的消息数组
+const messages = ref([])
+
+// 创建一个单例实例
+let instance = null
 
 export function useChat() {
-  const messages = ref([])
-  const inputMessage = ref('')
-  let currentMessageId = null
-
-  const appendMessage = (content, isUser) => {
-    const message = {
-      id: nanoid(),
-      content,
-      isUser,
-      timestamp: Date.now()
-    }
-    messages.value.push(message)
-    if (!isUser) {
-      currentMessageId = message.id
-    }
-    return message.id
-  }
-
-  const updateMessage = (content) => {
-    if (currentMessageId) {
-      const message = messages.value.find(m => m.id === currentMessageId)
-      if (message) {
-        message.content += content
+  if (!instance) {
+    instance = {
+      // 直接暴露响应式的消息数组
+      messages,
+      
+      addMessage(message) {
+        console.log('Adding message:', message)
+        messages.value.push(message)
+      },
+      
+      appendToLastMessage(content) {
+        console.log('Appending content:', content)
+        if (messages.value.length > 0) {
+          const lastMessage = messages.value[messages.value.length - 1]
+          lastMessage.content += content
+        }
+      },
+      
+      clearMessages() {
+        messages.value = []
       }
     }
   }
-
-  const sendMessage = async (content) => {
-    if (!content.trim()) return
-    
-    appendMessage(content, true)
-    appendMessage('', false)
-    
-    chrome.runtime.sendMessage({
-      type: 'sendMessage',
-      message: content
-    })
-  }
-
-  chrome.runtime.onMessage.addListener((message) => {
-    switch (message.type) {
-      case 'stream':
-        updateMessage(message.content)
-        break
-      case 'error':
-        if (currentMessageId) {
-          const message = messages.value.find(m => m.id === currentMessageId)
-          if (message) {
-            message.content = '发送消息失败: ' + message.error
-            message.error = true
-          }
-        }
-        break
-      case 'done':
-        currentMessageId = null
-        break
-    }
-  })
-
-  return {
-    messages,
-    inputMessage,
-    sendMessage
-  }
+  
+  return instance
 } 

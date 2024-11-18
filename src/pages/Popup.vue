@@ -1,112 +1,110 @@
 <template>
-  <div class="popup">
+  <div class="popup-container">
     <div class="form-group">
-      <label>Base URL:</label>
-      <input 
-        type="text" 
-        v-model="config.baseUrl"
-        placeholder="https://api.openai.com"
-      >
+      <label>Base URL</label>
+      <input v-model="config.baseUrl" type="text" placeholder="请输入Base URL" />
     </div>
     <div class="form-group">
-      <label>API Key:</label>
-      <input 
-        type="password" 
-        v-model="config.apiKey"
-      >
+      <label>API Key</label>
+      <input v-model="config.apiKey" type="password" placeholder="请输入API Key" />
     </div>
     <div class="form-group">
-      <label>模型:</label>
-      <ModelSelect
-        v-model="config.selectedModel"
-        :models="models"
-      />
-      <div v-if="loading" class="loading">
-        正在获取可用模型...
+      <label>模型</label>
+      <ModelSelect />
+      <div class="model-count" v-if="models.length">
+        已加载 {{ models.length }} 个模型
       </div>
+      <button 
+        @click="handleFetchModels" 
+        :disabled="loading || !config.baseUrl || !config.apiKey"
+        class="fetch-button"
+      >
+        {{ loading ? '加载中...' : '获取模型列表' }}
+      </button>
     </div>
-    <button 
-      @click="saveConfig"
-      :disabled="loading"
-    >
-      保存配置
-    </button>
+    <div class="actions">
+      <button @click="handleSave" :disabled="loading">保存</button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import ModelSelect from '../components/ModelSelect.vue'
-import { useModels } from '../composables/useModels'
+import { ref, onMounted } from 'vue'
 import { useStorage } from '../composables/useStorage'
+import { useModels } from '../composables/useModels'
+import ModelSelect from '../components/ModelSelect.vue'
 
-const { models, fetchModels } = useModels()
 const { getConfig, setConfig } = useStorage()
-const loading = ref(false)
-const config = reactive({
+const { fetchModels, loading, models } = useModels()
+const config = ref({
   baseUrl: '',
   apiKey: '',
-  selectedModel: ''
 })
 
 onMounted(async () => {
   const savedConfig = await getConfig()
-  Object.assign(config, savedConfig)
-  
-  if (config.baseUrl && config.apiKey) {
-    loading.value = true
-    await fetchModels(config.baseUrl, config.apiKey)
-    loading.value = false
+  config.value = {
+    baseUrl: savedConfig.baseUrl || '',
+    apiKey: savedConfig.apiKey || '',
   }
 })
 
-const saveConfig = async () => {
-  debugger
-  loading.value = true
+const handleSave = async () => {
   try {
-    const modelsList = await fetchModels(config.baseUrl, config.apiKey)
-    if (modelsList.length > 0) {
-      if (!config.selectedModel) {
-        config.selectedModel = modelsList[0].id
-      }
-      await setConfig(config)
-      alert('配置已保存！')
-    } else {
-      alert('获取模型列表失败，请检查配置是否正确')
-    }
+    // 保存时合并现有配置，但保留模型相关信息
+    const currentConfig = await getConfig()
+    await setConfig({
+      ...currentConfig,
+      baseUrl: config.value.baseUrl,
+      apiKey: config.value.apiKey,
+    })
+    window.close()
   } catch (error) {
-    alert('保存配置失败: ' + error.message)
+    console.error('Error saving config:', error)
   }
-  loading.value = false
+}
+
+const handleFetchModels = async () => {
+  try {
+    await fetchModels()
+  } catch (error) {
+    console.error('Error fetching models:', error)
+    // 这里可以添加错误提示
+  }
 }
 </script>
 
 <style scoped>
-.popup {
-  width: 300px;
-  padding: 16px;
+.popup-container {
+  padding: 1rem;
+  min-width: 300px;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
-label {
+.form-group label {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
 }
 
-input {
+.form-group input {
   width: 100%;
-  padding: 6px;
+  padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
 
+.actions {
+  margin-top: 1rem;
+  text-align: right;
+}
+
 button {
-  width: 100%;
-  padding: 8px;
-  background: #2196F3;
+  padding: 0.5rem 1rem;
+  background: #4CAF50;
   color: white;
   border: none;
   border-radius: 4px;
@@ -118,9 +116,20 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.loading {
+.fetch-button {
+  margin-top: 0.5rem;
+  width: 100%;
+  background: #2196F3;
+}
+
+.fetch-button:disabled {
+  background: #ccc;
+}
+
+.model-count {
+  margin-top: 0.5rem;
+  font-size: 0.9em;
   color: #666;
-  font-style: italic;
-  margin-top: 4px;
+  text-align: center;
 }
 </style> 
