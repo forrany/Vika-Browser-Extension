@@ -24,7 +24,7 @@ import ChatInput from './ChatInput.vue'
 import ModelSelect from './ModelSelect.vue'
 import { useChat } from '../composables/useChat'
 
-const { messages, addMessage, appendToLastMessage } = useChat()
+const { messages, addMessage, appendToLastMessage, isResponding, startResponding } = useChat()
 const currentMessageContent = ref('')
 
 // 添加消息监听器
@@ -73,6 +73,9 @@ const handleSendMessage = async (message) => {
     content: message
   })
   
+  // 开始响应状态
+  startResponding()
+  
   // 发送消息到 background script
   try {
     await chrome.runtime.sendMessage({
@@ -85,6 +88,9 @@ const handleSendMessage = async (message) => {
       role: 'error',
       content: '发送消息失败: ' + error.message
     })
+  } finally {
+    // 确保响应状态被重置
+    isResponding.value = false
   }
 }
 </script>

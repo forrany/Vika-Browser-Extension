@@ -35,4 +35,17 @@ defineProps({
   background: #f5f5f5;
   margin-right: 20px;
 }
+
+.stop-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.stop-btn:hover {
+  background: #ee3333;
+}
 </style> 

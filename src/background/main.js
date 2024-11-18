@@ -1,3 +1,6 @@
+// 在文件顶部添加
+let abortController = null;
+
 // 使用原生 Chrome Storage API 获取配置
 async function getConfig() {
   return new Promise((resolve) => {
@@ -60,6 +63,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       
       return true;
     }
+    
+    if (request.type === 'stopResponse') {
+      if (abortController) {
+        abortController.abort();
+        abortController = null;
+        sendResponse({ success: true });
+      }
+    }
   } catch (error) {
     console.error('Error in background script:', error);
     sendResponse({ success: false, error: error.message });
@@ -75,6 +86,10 @@ async function handleMessage(message, tabId) {
   }
   
   try {
+    // 创建新的 AbortController
+    abortController = new AbortController();
+    const signal = abortController.signal;  // 获取 signal
+    
     console.log('Sending request to:', config.baseUrl);
     const response = await fetch(`${config.baseUrl}/v1/chat/completions`, {
       method: 'POST',
@@ -89,7 +104,8 @@ async function handleMessage(message, tabId) {
         }],
         model: config.selectedModel || 'gpt-3.5-turbo',
         stream: true
-      })
+      }),
+      signal  // 使用 signal 而不是 abortSignal
     });
     
     if (!response.ok) {
@@ -152,6 +168,24 @@ async function handleMessage(message, tabId) {
     }
     
   } catch (error) {
+    // 处理中止请求的情况
+    if (error.name === 'AbortError') {
+      console.log('请求已被用户终止');
+      // 发送终止消息到 sidepanel
+      try {
+        await chrome.runtime.sendMessage({
+          type: 'streamDone',
+          aborted: true
+        });
+      } catch (e) {
+        chrome.tabs.sendMessage(tabId, {
+          type: 'done',
+          aborted: true
+        });
+      }
+      return;
+    }
+    
     console.error('API调用失败:', error);
     throw new Error('调用AI API失败: ' + error.message);
   }

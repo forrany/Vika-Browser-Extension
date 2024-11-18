@@ -5,12 +5,15 @@
       placeholder="输入消息..."
       @keypress.enter.prevent="handleEnter"
     />
-    <button @click="handleSend">发送</button>
+    <button @click="handleClick">{{ buttonText }}</button>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { useChat } from '../composables/useChat'
+
+const { isResponding, stopResponse } = useChat()
 
 const props = defineProps({
   modelValue: String
@@ -20,9 +23,21 @@ const emit = defineEmits(['update:modelValue', 'send'])
 
 const localValue = ref(props.modelValue)
 
+const buttonText = computed(() => {
+  return isResponding.value ? '停止生成' : '发送'
+})
+
 watch(() => props.modelValue, (newVal) => {
   localValue.value = newVal
 })
+
+const handleClick = () => {
+  if (isResponding.value) {
+    stopResponse()
+  } else {
+    handleSend()
+  }
+}
 
 const handleSend = () => {
   if (!localValue.value.trim()) return
