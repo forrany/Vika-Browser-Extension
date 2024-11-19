@@ -18,7 +18,7 @@ export async function openSidebar(tabId) {
     // 设置侧边栏选项
     await chrome.sidePanel.setOptions({
       tabId,
-      path: 'src/pages/sidepanel.html',
+      path: 'src/pages/Sidebar/sidepanel.html',
       enabled: true
     });
 

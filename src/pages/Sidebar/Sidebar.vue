@@ -19,10 +19,10 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import ChatMessage from './ChatMessage.vue'
-import ChatInput from './ChatInput.vue'
-import ModelSelect from './ModelSelect.vue'
-import { useChat } from '../composables/useChat'
+import ChatMessage from '../../components/ChatMessage.vue'
+import ChatInput from '../../components/ChatInput.vue'
+import ModelSelect from '../../components/ModelSelect.vue'
+import { useChat } from '../../composables/useChat'
 
 const { messages, addMessage, appendToLastMessage, isResponding, startResponding } = useChat()
 const currentMessageContent = ref('')

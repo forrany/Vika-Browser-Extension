@@ -31,10 +31,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useStorage } from '../composables/useStorage'
-import { useModels } from '../composables/useModels'
-import ModelSelect from '../components/ModelSelect.vue'
-import { openSidebar } from '../utils/sidebar'
+import { useStorage } from '../../composables/useStorage'
+import { useModels } from '../../composables/useModels'
+import ModelSelect from '../../components/ModelSelect.vue'
+import { openSidebar } from '../../utils/sidebar'
 
 const { getConfig, setConfig } = useStorage()
 const { fetchModels, loading, models } = useModels()
