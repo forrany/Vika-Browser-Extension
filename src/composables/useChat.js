@@ -9,47 +9,60 @@ const isResponding = ref(false)
 let instance = null
 
 export function useChat() {
+
+  const addMessage = (message) => {
+    messages.value.push(message)
+  }
+
+  const appendToLastMessage = (content) => {
+    if (messages.value.length > 0) {
+      const lastMessage = messages.value[messages.value.length - 1]
+      lastMessage.content += content
+    }
+  }
+
+  const clearMessages = () => {
+    messages.value = []
+  }
+
+  const startResponding = () => {
+    isResponding.value = true
+  }
+
+  const stopResponse = () => {
+    chrome.runtime.sendMessage({
+      type: 'stopResponse'
+    }).then(() => {
+      isResponding.value = false
+    })
+  }
+
   if (!instance) {
     instance = {
-      // 直接暴露响应式的消息数组
       messages,
       isResponding,
-      addMessage(message) {
-        console.log('Adding message:', message)
-        messages.value.push(message)
-      },
-      
-      appendToLastMessage(content) {
-        console.log('Appending content:', content)
-        if (messages.value.length > 0) {
-          const lastMessage = messages.value[messages.value.length - 1]
-          lastMessage.content += content
+      addMessage,
+      appendToLastMessage,
+      clearMessages,
+      startResponding,
+      stopResponse,
+      sendMessage: async () => {
+        try {
+          startResponding()
+          await chrome.runtime.sendMessage({
+            type: 'sendMessage',
+            data: {
+                messages: messages.value.map(msg => ({
+                  role: msg.role,
+                  content: msg.content
+                }))
+              }
+          })
+        } catch (error) {
+          console.error('Error sending message:', error)
         }
-      },
-      
-      clearMessages() {
-        messages.value = []
-      },
-
-      // 添加开始响应的方法
-      startResponding() {
-        isResponding.value = true
-        return
-      },
-
-      // 添加停止响应的方法
-      stopResponse() {
-        // 直接发送停止消息到 background script
-        chrome.runtime.sendMessage({
-          type: 'stopResponse'
-        }).then(() => {
-          isResponding.value = false
-        }).catch(error => {
-          console.error('Error sending stop message:', error)
-        })
       }
     }
   }
-  
   return instance
-} 
+}

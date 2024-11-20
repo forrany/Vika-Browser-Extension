@@ -29,6 +29,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('request', request);
     
     if (request.type === 'sendMessage') {
+      const messages = request.data.messages;
+      
       chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
         if (!tabs[0]?.id) {
           console.error('No active tab found');
@@ -36,7 +38,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         
         try {
-          await handleMessage(request.message, tabs[0].id);
+          await handleMessage(messages, tabs[0].id);
           sendResponse({ success: true });
         } catch (error) {
           console.error('Error handling message:', error);
@@ -60,7 +62,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-async function handleMessage(message, tabId) {
+async function handleMessage(messages, tabId) {
   const config = await getConfig();
   console.log('Got config:', config);
   
@@ -81,10 +83,7 @@ async function handleMessage(message, tabId) {
         'Authorization': `Bearer ${config.apiKey}`
       },
       body: JSON.stringify({
-        messages: [{
-          role: 'user',
-          content: message
-        }],
+        messages: messages,
         model: config.selectedModel || 'gpt-3.5-turbo',
         stream: true
       }),
